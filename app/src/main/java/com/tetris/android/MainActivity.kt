@@ -3,39 +3,19 @@ package com.tetris.android
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.tetris.android.ui.theme.TetrisTheme
+import androidx.core.view.WindowCompat
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // DecorView不再为SystemUI(状态栏和导航栏)预留padding
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val controller = WindowCompat.getInsetsController(window, window.decorView)
+        // 状态栏设置为亮色(状态栏的文字、图标颜色为暗色)
+        controller?.isAppearanceLightStatusBars = true
+
         setContent {
-            TetrisTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background) {
-                    Greeting("Android")
-                }
-            }
+
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    TetrisTheme {
-        Greeting("Android")
     }
 }
