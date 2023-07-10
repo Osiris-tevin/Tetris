@@ -65,3 +65,9 @@ val button = TextStyle(
     fontFamily = nunitoSansFamily,
     fontWeight = FontWeight.SemiBold
 )
+
+val gameLabel = TextStyle(
+    fontSize = 20.sp,
+    fontFamily = FontFamily.Cursive,
+    fontWeight = FontWeight.Bold
+)
