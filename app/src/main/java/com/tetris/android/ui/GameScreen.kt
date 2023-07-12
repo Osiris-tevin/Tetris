@@ -1,34 +1,112 @@
 package com.tetris.android.ui
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.tetris.android.logic.Sprite
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.tetris.android.logic.BrickSprite
+import com.tetris.android.logic.NextMatrix
+import com.tetris.android.ui.composable.LedNumber
 import com.tetris.android.ui.theme.BrickMatrix
 import com.tetris.android.ui.theme.BrickSprite
+import com.tetris.android.R
+import com.tetris.android.ui.composable.LedClock
 
 @Composable
 fun GameScreen(modifier: Modifier = Modifier) {
-
+    GameScoreboard(sprite = com.tetris.android.logic.BrickSprite.Empty)
 }
 
-@Preview(showBackground = true)
+/**
+ * 游戏得分面板
+ * @param modifier Modifier实例对象
+ * @param brickSize 砖块大小
+ * @param sprite BrickSprite实例对象
+ * @param score 得分
+ * @param line 消除行数
+ * @param level 关卡等级
+ * @param isMute 是否静音
+ * @param isPaused 是否暂停
+ */
 @Composable
-fun BrickMatrixPreview() {
-    val brickSize = 50f
-    Canvas(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        val pair = Pair(12, 24)
-        drawMatrix(brickSize, pair)
+fun GameScoreboard(
+    modifier: Modifier = Modifier,
+    brickSize: Float = 35f,
+    sprite: BrickSprite,
+    score: Int = 0,
+    line: Int = 0,
+    level: Int = 1,
+    isMute: Boolean = false,
+    isPaused: Boolean = false
+) {
+    Row(modifier = modifier.fillMaxSize()) {
+        Spacer(modifier = Modifier.weight(0.65f))
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(0.35f)
+        ) {
+            // 得分
+            Text(text = "Score", fontSize = 12.sp)
+            LedNumber(modifier = Modifier.fillMaxWidth(), number = score, digits = 6)
+            Spacer(modifier = Modifier.height(12.dp))
+            // 消除行数
+            Text(text = "Lines", fontSize = 12.sp)
+            LedNumber(modifier = Modifier.fillMaxWidth(), number = line, digits = 6)
+            Spacer(modifier = Modifier.height(12.dp))
+            // 关卡等级
+            Text(text = "Level", fontSize = 12.sp)
+            LedNumber(modifier = Modifier.fillMaxWidth(), number = level, digits = 1)
+            Spacer(modifier = Modifier.height(12.dp))
+            // 下一种砖块
+            Text(text = "Next", fontSize = 12.sp)
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally)
+                    .padding(10.dp)
+            ) {
+                drawMatrix(brickSize = brickSize, matrix = NextMatrix)
+                drawSprite(
+                    sprite = sprite.adjustOffset(NextMatrix),
+                    brickSize = brickSize,
+                    matrix = NextMatrix
+                )
+            }
+            // 游戏设置信息(静音/暂停/当前时间)
+            Spacer(modifier = Modifier.weight(1f))
+            Row {
+                Image(
+                    modifier = Modifier.width(15.dp),
+                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_baseline_music_off_24),
+                    colorFilter = ColorFilter.tint(if (isMute) BrickSprite else BrickMatrix),
+                    contentDescription = "Icon Music Off"
+                )
+                Image(
+                    modifier = modifier.width(15.dp),
+                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_baseline_pause_24),
+                    colorFilter = ColorFilter.tint(if (isPaused) BrickSprite else BrickMatrix),
+                    contentDescription = "Icon Pause"
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                LedClock()
+            }
+        }
     }
 }
 
@@ -95,7 +173,7 @@ private fun DrawScope.drawBrick(
  * @param matrix 矩阵大小
  */
 private fun DrawScope.drawSprite(
-    sprite: Sprite,
+    sprite: BrickSprite,
     brickSize: Float,
     matrix: Pair<Int, Int>
 ) {
@@ -111,5 +189,17 @@ private fun DrawScope.drawSprite(
                 BrickSprite
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun BrickMatrixPreview() {
+    val brickSize = 50f
+    Canvas(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        val pair = Pair(12, 24)
+        drawMatrix(brickSize, pair)
     }
 }

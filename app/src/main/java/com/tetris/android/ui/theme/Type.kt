@@ -4,6 +4,7 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.tetris.android.R
@@ -41,6 +42,14 @@ val nunitoSansFamily = FontFamily(
     Font(R.font.nunitosans_bold, FontWeight.Bold)
 )
 
+val LedFontFamily = FontFamily(
+    Font(R.font.unidream_led, FontWeight.Light),
+    Font(R.font.unidream_led, FontWeight.Normal),
+    Font(R.font.unidream_led, FontWeight.Normal, FontStyle.Italic),
+    Font(R.font.unidream_led, FontWeight.Medium),
+    Font(R.font.unidream_led, FontWeight.Bold)
+)
+
 val h1 = TextStyle(
     fontSize = 18.sp,
     fontFamily = nunitoSansFamily,
@@ -64,6 +73,11 @@ val button = TextStyle(
     fontSize = 12.sp,
     fontFamily = nunitoSansFamily,
     fontWeight = FontWeight.SemiBold
+)
+
+val ledNumber = TextStyle(
+    fontSize = 16.sp,
+    fontFamily = LedFontFamily
 )
 
 val gameLabel = TextStyle(
