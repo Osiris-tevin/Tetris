@@ -1,10 +1,15 @@
 package com.tetris.android.ui
 
+import android.graphics.Paint
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -14,22 +19,72 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tetris.android.R
+import com.tetris.android.logic.Brick
 import com.tetris.android.logic.BrickSprite
 import com.tetris.android.logic.NextMatrix
+import com.tetris.android.logic.state.GameStatus
+import com.tetris.android.ui.composable.LedClock
 import com.tetris.android.ui.composable.LedNumber
 import com.tetris.android.ui.theme.BrickMatrix
 import com.tetris.android.ui.theme.BrickSprite
-import com.tetris.android.R
-import com.tetris.android.ui.composable.LedClock
+import com.tetris.android.ui.theme.ScreenBackground
+import kotlin.math.min
 
 @Composable
 fun GameScreen(modifier: Modifier = Modifier) {
-    GameScoreboard(sprite = com.tetris.android.logic.BrickSprite.Empty)
+    val gameViewModel = viewModel<GameViewModel>()
+    val state by gameViewModel.gameViewState.collectAsState()
+
+    Box(
+        modifier = modifier
+            .background(Color.Black)
+            .padding(1.dp)
+            .background(ScreenBackground)
+            .padding(10.dp)
+    ) {
+        val animateValue by rememberInfiniteTransition().animateFloat(
+            initialValue = 0f,
+            targetValue = 0.7f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1500),
+                repeatMode = RepeatMode.Reverse
+            )
+        )
+        
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val brickSize = min(
+                size.width / state.matrix.first,
+                size.height / state.matrix.second
+            )
+
+            drawMatrix(brickSize = brickSize, matrix = state.matrix)
+            drawMatrixBorder(brickSize = brickSize, matrix = state.matrix)
+            drawBricks(bricks = state.bricks, brickSize = brickSize, matrix = state.matrix)
+            drawSprite(sprite = state.sprite, brickSize = brickSize, matrix = state.matrix)
+            drawText(gameStatus = state.gameStatus, brickSize = brickSize, matrix = state.matrix, alpha = animateValue)
+        }
+
+        GameScoreboard(
+            sprite = run {
+                if (state.sprite == com.tetris.android.logic.BrickSprite.Empty) com.tetris.android.logic.BrickSprite.Empty
+                else state.nextSprite.rotate()
+            },
+            score = state.score,
+            line = state.line,
+            level = state.level,
+            isMute = state.isMute,
+            isPaused = state.isPaused
+        )
+    }
 }
 
 /**
@@ -111,6 +166,50 @@ fun GameScoreboard(
 }
 
 /**
+ * 根据游戏状态绘制提示文本
+ * @param gameStatus 当前游戏状态
+ * @param brickSize 砖块大小
+ * @param matrix 矩阵大小
+ * @param alpha 文本的透明度, 取值范围为0(完全透明)到1(完全不透明)
+ */
+private fun DrawScope.drawText(
+    gameStatus: GameStatus,
+    brickSize: Float,
+    matrix: Pair<Int, Int>,
+    alpha: Float
+) {
+    // 计算矩阵的中心位置
+    val center = Offset(
+        brickSize * matrix.first / 2,
+        brickSize * matrix.second / 2
+    )
+
+    val drawText = { text: String, size: Float ->
+        drawIntoCanvas { canvas ->
+            canvas.nativeCanvas.drawText(
+                text,
+                center.x,
+                center.y,
+                Paint().apply {
+                    color = Color.Black.copy(alpha = alpha).toArgb()
+                    textSize = size
+                    textAlign = Paint.Align.CENTER
+                    style = Paint.Style.FILL_AND_STROKE
+                    strokeWidth =  size / 12
+                }
+            )
+        }
+    }
+
+    // 根据游戏状态绘制相应的文本
+    if (gameStatus == GameStatus.Greeting) {
+        drawText("TETRIS", 80f)
+    } else if (gameStatus == GameStatus.GameOver) {
+        drawText("GAME OVER", 60f)
+    }
+}
+
+/**
  * 绘制砖块矩阵
  * @param brickSize 砖块大小
  * @param matrix 矩阵大小
@@ -129,6 +228,30 @@ private fun DrawScope.drawMatrix(
             )
         }
     }
+}
+
+/**
+ * 绘制砖块矩阵边框
+ * @param brickSize 砖块大小
+ * @param matrix 矩阵大小
+ */
+private fun DrawScope.drawMatrixBorder(
+    brickSize: Float,
+    matrix: Pair<Int, Int>
+) {
+    val gap = matrix.first * brickSize * 0.05f  // 边框与矩阵之间的间隙
+    drawRect(
+        color = Color.Black,
+        size = Size(
+            matrix.first * brickSize + gap,
+            matrix.second * brickSize + gap
+        ),
+        topLeft = Offset(
+            -gap / 2,
+            -gap / 2
+        ),
+        style = Stroke(1.dp.toPx())
+    )
 }
 
 /**
@@ -167,6 +290,29 @@ private fun DrawScope.drawBrick(
 }
 
 /**
+ * 绘制已有的砖块
+ * @param bricks 已有砖块的列表
+ * @param brickSize 砖块大小
+ * @param matrix 矩阵大小
+ */
+private fun DrawScope.drawBricks(
+    bricks: List<Brick>,
+    brickSize: Float,
+    matrix: Pair<Int, Int>
+) {
+    clipRect(
+        left = 0f,
+        top = 0f,
+        right = matrix.first * brickSize,
+        bottom = matrix.second * brickSize
+    ) {
+        bricks.forEach { brick ->
+            drawBrick(brickSize = brickSize, offset = brick.location, color = BrickSprite)
+        }
+    }
+}
+
+/**
  * 绘制下落砖块
  * @param sprite 下落砖块对象, 包含位置信息
  * @param brickSize 砖块大小
@@ -189,17 +335,5 @@ private fun DrawScope.drawSprite(
                 BrickSprite
             )
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun BrickMatrixPreview() {
-    val brickSize = 50f
-    Canvas(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        val pair = Pair(12, 24)
-        drawMatrix(brickSize, pair)
     }
 }

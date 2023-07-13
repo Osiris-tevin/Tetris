@@ -3,6 +3,7 @@
     <string name="app_version">1.0.0</string>
     <!--HomeScreen-->
     <string name="game_label">TETRIS</string>
+    <string name="game_over">GAME OVER</string>
     <string name="button_sounds">SOUNDS</string>
     <string name="button_pause">PAUSE/RESUME</string>
     <string name="button_reset">START/RESET</string>
