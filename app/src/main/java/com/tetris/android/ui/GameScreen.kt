@@ -8,7 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,23 +25,25 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tetris.android.R
 import com.tetris.android.logic.Brick
-import com.tetris.android.logic.BrickSprite
-import com.tetris.android.logic.NextMatrix
+import com.tetris.android.logic.sprite.BrickSprite
 import com.tetris.android.logic.state.GameStatus
+import com.tetris.android.logic.util.Constants.PreviewMatrixSize
 import com.tetris.android.ui.composable.LedClock
 import com.tetris.android.ui.composable.LedNumber
 import com.tetris.android.ui.theme.BrickMatrix
 import com.tetris.android.ui.theme.BrickSprite
 import com.tetris.android.ui.theme.ScreenBackground
+import com.tetris.android.ui.viewModel.GameViewModel
 import kotlin.math.min
 
 @Composable
-fun GameScreen(modifier: Modifier = Modifier) {
-    val gameViewModel = viewModel<GameViewModel>()
-    val state by gameViewModel.gameViewState.collectAsState()
+fun GameScreen(
+    modifier: Modifier = Modifier,
+    gameViewModel: GameViewModel
+) {
+    val state = gameViewModel.gameViewState.value
 
     Box(
         modifier = modifier
@@ -75,14 +76,14 @@ fun GameScreen(modifier: Modifier = Modifier) {
 
         GameScoreboard(
             sprite = run {
-                if (state.sprite == com.tetris.android.logic.BrickSprite.Empty) com.tetris.android.logic.BrickSprite.Empty
+                if (state.sprite == com.tetris.android.logic.sprite.BrickSprite.Empty) com.tetris.android.logic.sprite.BrickSprite.Empty
                 else state.nextSprite.rotate()
             },
             score = state.score,
             line = state.line,
             level = state.level,
             isMute = state.isMute,
-            isPaused = state.isPaused
+            isPausing = state.isPausing
         )
     }
 }
@@ -96,7 +97,7 @@ fun GameScreen(modifier: Modifier = Modifier) {
  * @param line 消除行数
  * @param level 关卡等级
  * @param isMute 是否静音
- * @param isPaused 是否暂停
+ * @param isPausing 是否暂停
  */
 @Composable
 fun GameScoreboard(
@@ -107,7 +108,7 @@ fun GameScoreboard(
     line: Int = 0,
     level: Int = 1,
     isMute: Boolean = false,
-    isPaused: Boolean = false
+    isPausing: Boolean = false
 ) {
     Row(modifier = modifier.fillMaxSize()) {
         Spacer(modifier = Modifier.weight(0.65f))
@@ -136,11 +137,11 @@ fun GameScoreboard(
                     .align(Alignment.CenterHorizontally)
                     .padding(10.dp)
             ) {
-                drawMatrix(brickSize = brickSize, matrix = NextMatrix)
+                drawMatrix(brickSize = brickSize, matrix = PreviewMatrixSize)
                 drawSprite(
-                    sprite = sprite.adjustOffset(NextMatrix),
+                    sprite = sprite.adjustOffset(PreviewMatrixSize),
                     brickSize = brickSize,
-                    matrix = NextMatrix
+                    matrix = PreviewMatrixSize
                 )
             }
             // 游戏设置信息(静音/暂停/当前时间)
@@ -155,7 +156,7 @@ fun GameScoreboard(
                 Image(
                     modifier = modifier.width(15.dp),
                     imageVector = ImageVector.vectorResource(id = R.drawable.ic_baseline_pause_24),
-                    colorFilter = ColorFilter.tint(if (isPaused) BrickSprite else BrickMatrix),
+                    colorFilter = ColorFilter.tint(if (isPausing) BrickSprite else BrickMatrix),
                     contentDescription = "Icon Pause"
                 )
                 Spacer(modifier = Modifier.weight(1f))

@@ -14,10 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -29,32 +26,100 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tetris.android.R
-import com.tetris.android.logic.Clickable
 import com.tetris.android.logic.Direction
-import com.tetris.android.logic.combinedClickable
+import com.tetris.android.logic.event.GameEvent
+import com.tetris.android.logic.util.Clickable
+import com.tetris.android.logic.util.Constants.DirectionButtonSize
+import com.tetris.android.logic.util.Constants.RotateButtonSize
+import com.tetris.android.logic.util.Constants.SettingButtonSize
+import com.tetris.android.logic.util.combinedClickable
 import com.tetris.android.ui.theme.*
+import com.tetris.android.ui.viewModel.GameViewModel
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.ticker
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-
-val SettingButtonSize = 15.dp
-val DirectionButtonSize = 60.dp
-val RotateButtonSize = 90.dp
 
 @Preview
 @Composable
 fun HomeScreen() {
-    GameBody {
-        GameScreen(Modifier.fillMaxSize())
+    val gameViewModel = viewModel<GameViewModel>()
+    val state = gameViewModel.gameViewState.value
+
+    // 使用LaunchedEffect处理游戏的时间更新
+    LaunchedEffect(key1 = Unit) {
+        while (isActive) {
+            delay(timeMillis = 650L - 55 * (state.level - 1))
+            // 向gameViewModel派发一个游戏时间更新事件
+            gameViewModel.dispatch(GameEvent.GameTick)
+        }
+    }
+
+    // 获取当前的生命周期所有者
+    val lifecycleOwner = LocalLifecycleOwner.current
+    // 使用DisposableEffect处理生命周期事件和资源释放
+    DisposableEffect(key1 = Unit) {
+        // 创建一个DefaultLifecycleObserver对象, 监听生命周期事件
+        val observer = object : DefaultLifecycleObserver {
+            // 当生命周期恢复时派发GameEvent.Resume事件
+            override fun onResume(owner: LifecycleOwner) {
+                gameViewModel.dispatch(GameEvent.Resume)
+            }
+            // 当生命周期暂停时派发GameEvent.Pause事件
+            override fun onPause(owner: LifecycleOwner) {
+                gameViewModel.dispatch(GameEvent.Pause)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        // 组件销毁时执行onDispose代码块
+        onDispose {
+            // 移除生命周期观察者, 避免内存泄漏
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    GameBody(
+        combinedClickable(
+            onMove = { direction: Direction ->
+                if (direction == Direction.Up) gameViewModel.dispatch(GameEvent.Drop)
+                else gameViewModel.dispatch(GameEvent.Move(direction))
+            },
+            onRotate = {
+                gameViewModel.dispatch(GameEvent.Rotate)
+            },
+            onRestart = {
+                gameViewModel.dispatch(GameEvent.Reset)
+            },
+            onPause = {
+                if (state.isRunning) {
+                    gameViewModel.dispatch(GameEvent.Pause)
+                } else {
+                    gameViewModel.dispatch(GameEvent.Resume)
+                }
+            },
+            onMute = {
+                gameViewModel.dispatch(GameEvent.Mute)
+            }
+        )
+    ) {
+        GameScreen(
+            modifier = Modifier.fillMaxSize(),
+            gameViewModel = gameViewModel
+        )
     }
 }
 
@@ -168,7 +233,7 @@ private fun GameButtons(
             GameButton(
                 modifier = Modifier.align(Alignment.CenterStart),
                 onClick = { clickable.onMove(Direction.Left) },
-                autoInvokeWhenPressed = true,
+                autoInvokeWhenPressed = false,
                 size = DirectionButtonSize
             ) {
                 GameButtonText(modifier = it, text = stringResource(id = R.string.button_left))
@@ -177,7 +242,7 @@ private fun GameButtons(
             GameButton(
                 modifier = Modifier.align(Alignment.CenterEnd),
                 onClick = { clickable.onMove(Direction.Right) },
-                autoInvokeWhenPressed = true,
+                autoInvokeWhenPressed = false,
                 size = DirectionButtonSize
             ) {
                 GameButtonText(modifier = it, text = stringResource(id = R.string.button_right))
@@ -186,7 +251,7 @@ private fun GameButtons(
             GameButton(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 onClick = { clickable.onMove(Direction.Down) },
-                autoInvokeWhenPressed = true,
+                autoInvokeWhenPressed = false,
                 size = DirectionButtonSize
             ) {
                 GameButtonText(modifier = it, text = stringResource(id = R.string.button_down))

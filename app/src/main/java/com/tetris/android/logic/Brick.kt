@@ -1,6 +1,7 @@
 package com.tetris.android.logic
 
 import androidx.compose.ui.geometry.Offset
+import com.tetris.android.logic.sprite.BrickSprite
 
 /**
  * 砖块类

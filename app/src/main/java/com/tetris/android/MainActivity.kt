@@ -4,9 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.view.WindowCompat
+import com.tetris.android.logic.util.SoundUtil
 import com.tetris.android.ui.HomeScreen
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // DecorView不再为SystemUI(状态栏和导航栏)预留padding
@@ -19,4 +21,10 @@ class MainActivity : ComponentActivity() {
             HomeScreen()
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        SoundUtil.release()
+    }
+
 }

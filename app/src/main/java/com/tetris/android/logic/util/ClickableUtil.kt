@@ -1,4 +1,6 @@
-package com.tetris.android.logic
+package com.tetris.android.logic.util
+
+import com.tetris.android.logic.Direction
 
 // Clickable数据类, 用于存储各种点击事件的回调函数
 data class Clickable constructor(

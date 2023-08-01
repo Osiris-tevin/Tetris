@@ -1,14 +1,16 @@
 package com.tetris.android.logic.state
 
 import com.tetris.android.logic.Brick
-import com.tetris.android.logic.BrickSprite
+import com.tetris.android.logic.sprite.BrickSprite
+import com.tetris.android.logic.util.Constants.MatrixHeight
+import com.tetris.android.logic.util.Constants.MatrixWidth
 import kotlin.math.min
 
 data class GameViewState(
     val bricks: List<Brick> = emptyList(),
     val sprite: BrickSprite = BrickSprite.Empty,
     val randomSprites: List<BrickSprite> = emptyList(),
-    val matrix: Pair<Int, Int> = 12 to 24,
+    val matrix: Pair<Int, Int> = MatrixWidth to MatrixHeight,
     val gameStatus: GameStatus = GameStatus.Greeting,
     val score: Int = 0,
     val line: Int = 0,
@@ -20,7 +22,7 @@ data class GameViewState(
     val nextSprite: BrickSprite
         get() = randomSprites.firstOrNull() ?: BrickSprite.Empty
 
-    val isPaused
+    val isPausing
         get() = gameStatus == GameStatus.Pausing
 
     val isRunning

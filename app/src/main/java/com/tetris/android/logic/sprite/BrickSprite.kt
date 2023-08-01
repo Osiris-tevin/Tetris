@@ -1,6 +1,7 @@
-package com.tetris.android.logic
+package com.tetris.android.logic.sprite
 
 import androidx.compose.ui.geometry.Offset
+import com.tetris.android.logic.Brick
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 
