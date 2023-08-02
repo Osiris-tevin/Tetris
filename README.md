@@ -1,6 +1,6 @@
 # Tetris
 
-中文介绍 | English
+中文介绍 | [English](https://github.com/Osiris-tevin/Tetris/blob/main/README.en.md)
 
 ![](https://img.shields.io/badge/jetpack%20compose-1.1.1-green.svg)
 ![](https://img.shields.io/badge/min%20sdk%20version-21-orange.svg)
@@ -14,7 +14,7 @@
 - 基于MVI架构
 - 模拟液晶显示效果
 - 多种游戏音效
-- 致敬[rect-tetris](https://github.com/chvin/react-tetris/blob/master/README-EN.md)
+- 致敬[react-tetris](https://github.com/chvin/react-tetris/blob/master/README-EN.md)
 
 #### 游戏规则
 
